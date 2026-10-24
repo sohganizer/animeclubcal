@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root { --anison:#f91880; --vocaloid:#00a8a8; --vtuber:#7856ff; --ink:#0f1419; --sub:#536471; --line:#e6e9ec; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif; color:var(--ink); background:#f7f9f9; }
+  header { padding:18px 20px 8px; max-width:1180px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .lead { color:var(--sub); font-size:13px; margin:0; }
+  main { max-width:1180px; margin:0 auto; padding:0 20px 40px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; }
+  .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer; user-select:none; }
+  .chip i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .chip.off { opacity:.4; }
+  .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  select, input[type=search] { border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; background:#fff; }
+  input[type=search] { min-width:220px; }
+  .nav { display:flex; align-items:center; gap:10px; margin:8px 0; }
+  .nav b { font-size:18px; min-width:120px; text-align:center; }
+  .nav button { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(7, 1fr); background:var(--line); gap:1px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .dow { background:#fff; text-align:center; font-size:12px; color:var(--sub); padding:6px 0; }
+  .dow.sun, .day.sun .dn { color:#e0245e; } .dow.sat, .day.sat .dn { color:#1d9bf0; }
+  .day { background:#fff; min-height:112px; padding:4px 5px 6px; cursor:pointer; overflow:hidden; }
+  .day.out { background:#fafbfb; } .day.out .dn { opacity:.4; }
+  .day.today { box-shadow:inset 0 0 0 2px var(--ink); }
+  .day.sel { background:#fffbe6; }
+  .dn { font-size:12px; font-weight:600; }
+  .ev { display:block; font-size:11px; line-height:1.35; margin-top:2px; padding:1px 5px; border-radius:4px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ev.anison { background:var(--anison); } .ev.vocaloid { background:var(--vocaloid); } .ev.vtuber { background:var(--vtuber); }
+  .more { font-size:11px; color:var(--sub); margin-top:2px; }
+  .cols { display:grid; grid-template-columns:1fr 360px; gap:16px; margin-top:12px; align-items:start; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .panel h2 { font-size:15px; margin:0 0 8px; }
+  .item { border-top:1px solid var(--line); padding:10px 0; display:flex; gap:10px; }
+  .item:first-of-type { border-top:0; }
+  .item .t { font-weight:600; font-size:14px; line-height:1.4; }
+  .item .m { font-size:12px; color:var(--sub); margin-top:3px; line-height:1.5; }
+  .tag { display:inline-block; font-size:11px; color:#fff; border-radius:4px; padding:0 6px; margin-right:6px; vertical-align:1px; }
+  .tag.anison { background:var(--anison); } .tag.vocaloid { background:var(--vocaloid); } .tag.vtuber { background:var(--vtuber); }
+  a { color:#1d9bf0; text-decoration:none; } a:hover { text-decoration:underline; }
+  .empty { color:var(--sub); font-size:13px; padding:8px 0; }
+  .item .body { flex:1; min-width:0; }
+  .item .thumb { width:52px; height:52px; object-fit:cover; border-radius:6px; flex:none; background:#eee; }
+  #fly { position:fixed; z-index:50; display:none; pointer-events:none; background:#fff; padding:4px; border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,.25); }
+  #fly img { display:block; max-width:340px; max-height:460px; border-radius:7px; }
+  .flybtn { float:right; border:1px solid var(--line); background:#fff; border-radius:999px; padding:3px 10px; font-size:12px; cursor:pointer; }
+  #sheet { position:fixed; inset:0; z-index:60; display:none; background:rgba(15,20,25,.92); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #sheet .top { position:sticky; top:0; display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:rgba(15,20,25,.96); color:#fff; font-weight:600; }
+  #sheet .top button { border:0; background:#fff; color:var(--ink); border-radius:999px; padding:6px 14px; font-size:14px; }
+  #sheet .cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; padding:4px 16px 30px; max-width:1180px; margin:0 auto; }
+  #sheet .card { background:#fff; border-radius:10px; overflow:hidden; }
+  #sheet .card img { display:block; width:100%; height:auto; background:#eee; }
+  #sheet .card .c { padding:8px 10px 10px; }
+  #sheet .card .t { font-weight:600; font-size:14px; line-height:1.4; }
+  #sheet .card .m { font-size:12px; color:var(--sub); margin-top:3px; line-height:1.5; }
+  footer { max-width:1180px; margin:0 auto; padding:0 20px 30px; color:var(--sub); font-size:12px; line-height:1.6; }
+  @media (max-width: 860px) {
+    .cols { grid-template-columns:1fr; }
+    .day { min-height:64px; padding:3px; }
+    .ev { font-size:0; height:6px; padding:0; margin-top:2px; }
+    input[type=search] { min-width:0; flex:1; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>アニクラ・ボカクラ・VTuber クラブイベントカレンダー</h1>
+  <p class="lead">日本国内のアニソン（アニクラ）・ボカロ（ボカクラ）・VTuber 楽曲のクラブ・DJ イベントを、X の告知とウェブから毎日自動で集めています。日付・時間・会場は必ず出典で確かめてください。</p>
+</header>
+<main>
+  <div class="bar" id="areas"></div>
+  <div class="bar" id="genres"></div>
+  <div class="bar">
+    <select id="pref"><option value="">すべての都道府県</option></select>
+    <select id="kind"><option value="">すべての種類</option></select>
+    <input type="search" id="q" placeholder="イベント名・会場・DJ で探す">
+  </div>
+  <div class="nav"><button id="prev">‹ 前の月</button><b id="month"></b><button id="next">次の月 ›</button><button id="thisMonth">今月</button></div>
+  <div class="cols">
+    <div class="grid" id="grid"><div class="empty" style="grid-column:1/-1;background:#fff;padding:20px">読み込み中…</div></div>
+    <div class="panel" id="side"></div>
+  </div>
+</main>
+<footer id="foot"></footer>
+<div id="fly"><img alt=""></div>
+<div id="sheet"><div class="top"><span id="sheetTitle"></span><button id="sheetClose">閉じる</button></div><div class="cards" id="cards"></div></div>
+<script>
+var st = { data: null, ym: "", sel: "", off: {}, area: savedArea(), pref: "", kind: "", q: "" };
+var DOW = ["日", "月", "火", "水", "木", "金", "土"];
+function el(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function shift(d, n) { var p = d.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)).toISOString().slice(0, 10); }
+function dow(d) { var p = d.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay(); }
+function md(d) { var p = d.split("-"); return Number(p[1]) + "/" + Number(p[2]) + "（" + DOW[dow(d)] + "）"; }
+
+ 
+function fetchEvents(ok, ng) {
+  if (window.google && google.script && google.script.run) return google.script.run.withSuccessHandler(ok).withFailureHandler(ng).acEvents();
+  fetch("events.json?t=" + Date.now()).then(function (r) { if (!r.ok) throw new Error("events.json " + r.status); return r.json(); })
+    .then(function (d) { d.today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); ok(d); }).catch(ng);
+}
+function load(quiet) {
+  fetchEvents(function (d) {
+    var first = !st.data;
+    st.data = d;
+    if (first) {
+      st.ym = d.today.slice(0, 7);
+      st.sel = d.today;
+      el("kind").innerHTML += Object.keys(d.kinds).map(function (k) { return '<option value="' + k + '">' + esc(d.kinds[k]) + "</option>"; }).join("");
+    }
+    fillPrefs();
+    draw();
+  }, function (e) {
+    if (!quiet) el("grid").innerHTML = '<div class="empty" style="grid-column:1/-1;background:#fff;padding:20px">読み込めませんでした: ' + esc(e && e.message || e) + "</div>";
+  });
+}
+var PREF_ORDER = "北海道青森県岩手県宮城県秋田県山形県福島県茨城県栃木県群馬県埼玉県千葉県東京都神奈川県新潟県富山県石川県福井県山梨県長野県岐阜県静岡県愛知県三重県滋賀県京都府大阪府兵庫県奈良県和歌山県鳥取県島根県岡山県広島県山口県徳島県香川県愛媛県高知県福岡県佐賀県長崎県熊本県大分県宮崎県鹿児島県沖縄県";
+function prefOrder(a, b) { return PREF_ORDER.indexOf(a) - PREF_ORDER.indexOf(b); }
+var AREAS = [
+  { id: "all", name: "全国", prefs: "" },
+  { id: "north", name: "北海道・東北", prefs: "北海道青森県岩手県宮城県秋田県山形県福島県" },
+  { id: "kanto", name: "関東", prefs: "茨城県栃木県群馬県埼玉県千葉県東京都神奈川県" },
+  { id: "chubu", name: "中部・東海", prefs: "新潟県富山県石川県福井県山梨県長野県岐阜県静岡県愛知県三重県" },
+  { id: "kansai", name: "関西", prefs: "滋賀県京都府大阪府兵庫県奈良県和歌山県" },
+  { id: "west", name: "中国・四国", prefs: "鳥取県島根県岡山県広島県山口県徳島県香川県愛媛県高知県" },
+  { id: "kyushu", name: "九州・沖縄", prefs: "福岡県佐賀県長崎県熊本県大分県宮崎県鹿児島県沖縄県" }
+];
+function savedArea() {
+  try { var a = localStorage.getItem("ac:area"); if (AREAS.some(function (x) { return x.id === a; })) return a; } catch (e) {}
+  return "kanto";
+}
+ 
+function inArea(e, id) {
+  var a = AREAS.filter(function (x) { return x.id === id; })[0];
+  return !a || !a.prefs || (!!e.pref && a.prefs.indexOf(e.pref) >= 0);
+}
+ 
+function fillPrefs() {
+  var prefs = {};
+  st.data.events.forEach(function (e) { if (e.pref && inArea(e, st.area)) prefs[e.pref] = 1; });
+  if (st.pref && !prefs[st.pref]) st.pref = "";
+  el("pref").innerHTML = '<option value="">' + (st.area === "all" ? "すべての都道府県" : "エリア内のすべての都道府県") + "</option>" +
+    Object.keys(prefs).sort(prefOrder).map(function (p) { return "<option" + (p === st.pref ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("");
+}
+
+function shown() {
+  var q = st.q.toLowerCase();
+  return st.data.events.filter(function (e) {
+    if (st.off[e.genre]) return false;
+    if (!inArea(e, st.area)) return false;
+    if (st.pref && e.pref !== st.pref) return false;
+    if (st.kind && e.kind !== st.kind) return false;
+    return !q || [e.title, e.venue, e.pref, e.djs, e.handle].some(function (v) { return String(v || "").toLowerCase().indexOf(q) >= 0; });
+  });
+}
+ 
+function onDay(list, d) { return list.filter(function (e) { return e.date <= d && (e.end || e.date) >= d; }); }
+
+function draw() {
+  var d = st.data, list = shown();
+  var upcoming = d.events.filter(function (e) { return (e.end || e.date) >= d.today; });
+  el("areas").innerHTML = AREAS.map(function (a) {
+    var n = upcoming.filter(function (e) { return inArea(e, a.id); }).length;
+    return '<span class="chip' + (st.area === a.id ? " on" : "") + '" data-a="' + a.id + '">' + esc(a.name) + "（" + n + "）</span>";
+  }).join("");
+  el("genres").innerHTML = Object.keys(d.genres).map(function (g) {
+    var n = upcoming.filter(function (e) { return e.genre === g && inArea(e, st.area); }).length;
+    return '<span class="chip' + (st.off[g] ? " off" : "") + '" data-g="' + g + '"><i style="background:var(--' + g + ')"></i>' + esc(d.genres[g]) + "（" + n + "）</span>";
+  }).join("");
+  var y = Number(st.ym.slice(0, 4)), m = Number(st.ym.slice(5, 7));
+  el("month").textContent = y + "年" + m + "月";
+  var first = st.ym + "-01", start = shift(first, -dow(first));
+  var html = DOW.map(function (w, i) { return '<div class="dow' + (i === 0 ? " sun" : i === 6 ? " sat" : "") + '">' + w + "</div>"; }).join("");
+  for (var i = 0; i < 42; i++) {
+    var day = shift(start, i);
+    if (i === 35 && day.slice(0, 7) !== st.ym) break;
+    var evs = onDay(list, day).sort(function (a, b) { return (a.time || "99") < (b.time || "99") ? -1 : 1; });
+    var w = dow(day);
+    html += '<div class="day' + (day.slice(0, 7) !== st.ym ? " out" : "") + (day === d.today ? " today" : "") + (day === st.sel ? " sel" : "") +
+      (w === 0 ? " sun" : w === 6 ? " sat" : "") + '" data-d="' + day + '"><div class="dn">' + Number(day.slice(8)) + "</div>" +
+      evs.slice(0, 4).map(function (e) { return '<span class="ev ' + e.genre + '" data-f="' + esc(e.flyer) + '">' + esc((e.time ? e.time + " " : "") + e.title) + "</span>"; }).join("") +
+      (evs.length > 4 ? '<div class="more">ほか ' + (evs.length - 4) + " 件</div>" : "") + "</div>";
+  }
+  el("grid").innerHTML = html;
+  drawSide(list);
+  el("foot").innerHTML = runNote(d) + "最終更新: " + esc(d.last || "まだ1回も更新していません") +
+    "・毎日早朝に更新・情報は X の公開ポストと公開ウェブページから自動で集めたもので、まちがいや中止・変更が含まれることがあります。<br>版 " + esc(d.v);
+}
+
+var STEP = { bq: "X のポストを集めています", extract: "ポストからイベントを取り出しています", search: "ウェブと X でイベントを探しています", done: "今日の分は終わりました" };
+ 
+function runNote(d) {
+  var s = d.status || {}, r = s.run, out = [];
+  if (/^error/.test(s.trigger || "")) out.push('<span style="color:#e0245e">自動更新のトリガーを作れませんでした: ' + esc(s.trigger) + "</span>");
+  else if (s.trigger === "started") out.push("自動更新を始めました。10分以内に最初の取り込みが始まります。");
+  if (!s.tick && s.trigger === "ok") out.push('<span style="color:#e0245e">自動更新が動いていません。許可が済んでいない可能性があります（エディタで acTick を一度 ▶ 実行して「許可」）。</span>');
+  else if (!s.tick) out.push("自動更新はまだ1回も動いていません。");
+  else out.push("自動更新が最後に動いた時刻: " + esc(s.tick));
+  if (r && r.step !== "done") {
+    var p = r.step === "extract" ? "（" + (r.i || 0) + " / " + (r.posts || 0) + " 件）" : r.step === "search" ? "（" + (r.g || 0) + " / 3 ジャンル）" : "";
+    out.push("今日の取り込み: " + esc(STEP[r.step] || r.step) + p + "・ここまでに " + (r.n || 0) + " 件追加");
+  }
+  if (s.pub) out.push("公開ページ: " + esc(s.pub));
+  if (r && r.err) out.push('<span style="color:#e0245e">止まった理由: ' + esc(r.err) + "</span>");
+  return out.length ? out.join("<br>") + "<br>" : "";
+}
+
+ 
+function info(e) {
+  var when = md(e.date) + (e.end ? "〜" + md(e.end) : "") + (e.time ? " " + e.time + " 開場" : "");
+  var where = [e.venue, e.pref].filter(Boolean).join("・");
+  return '<div class="t"><span class="tag ' + e.genre + '">' + esc(st.data.genres[e.genre]) + "</span>" + esc(e.title) + "</div>" +
+    '<div class="m">' + esc(when) + (where ? " ｜ " + esc(where) : "") + " ｜ " + esc(st.data.kinds[e.kind] || "") +
+    (e.url ? ' ｜ <a href="' + esc(e.url) + '" target="_blank" rel="noopener">' + (/x\.com|twitter\.com/.test(e.url) ? "告知ポスト" + (e.handle ? "（@" + esc(e.handle) + "）" : "") : "出典") + "</a>" : "") + "</div>" +
+    (e.djs ? '<div class="m">DJ: ' + esc(e.djs) + "</div>" : "");
+}
+function item(e) {
+  return '<div class="item" data-f="' + esc(e.flyer) + '">' + (e.flyer ? '<img class="thumb" loading="lazy" alt="" src="' + esc(small(e.flyer)) + '" data-open="' + esc(e.date) + '">' : "") +
+    '<div class="body">' + info(e) + "</div></div>";
+}
+
+ 
+function openSheet(day) {
+  var evs = onDay(shown(), day).sort(function (a, b) { return (a.time || "99") < (b.time || "99") ? -1 : 1; });
+  if (!evs.length) return;
+  el("sheetTitle").textContent = md(day) + " のフライヤー（" + evs.length + "）";
+  el("cards").innerHTML = evs.map(function (e) {
+    var img = '<img loading="lazy" alt="" src="' + esc(big(e.flyer)) + '">';
+    return '<div class="card">' + (e.url ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">' + img + "</a>" : img) + '<div class="c">' + info(e) + "</div></div>";
+  }).join("");
+  el("fly").style.display = "none";
+  el("sheet").style.display = "block";
+  el("sheet").scrollTop = 0;
+  document.body.style.overflow = "hidden";
+}
+function closeSheet() { el("sheet").style.display = "none"; document.body.style.overflow = ""; }
+el("sheetClose").onclick = closeSheet;
+el("sheet").onclick = function (e) { if (e.target === el("sheet")) closeSheet(); };
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
+var TOUCH = window.matchMedia && window.matchMedia("(hover: none)").matches;
+function big(u) { return /^https:\/\/pbs\.twimg\.com\/media\//.test(u) ? u.replace(/(\?.*|:[a-z]+)$/, "") + "?name=medium" : u; }
+
+ 
+function small(u) { return /^https:\/\/pbs\.twimg\.com\/media\//.test(u) ? u.replace(/(\?.*|:[a-z]+)$/, "") + "?name=small" : u; }
+function placeFly(ev) {
+  var f = el("fly"), w = f.offsetWidth, h = f.offsetHeight, x = ev.clientX + 18, y = ev.clientY + 18;
+  if (x + w > window.innerWidth - 8) x = ev.clientX - w - 18;
+  if (y + h > window.innerHeight - 8) y = window.innerHeight - h - 8;
+  f.style.left = Math.max(8, x) + "px";
+  f.style.top = Math.max(8, y) + "px";
+}
+document.addEventListener("mouseover", function (ev) {
+  if (TOUCH) return;
+  var c = ev.target.closest && ev.target.closest("[data-f]"), f = el("fly"), img = f.querySelector("img");
+  var u = c ? c.getAttribute("data-f") : "";
+  if (!u) { f.style.display = "none"; return; }
+  if (img.getAttribute("data-u") !== u) { img.setAttribute("data-u", u); img.src = small(u); img.onload = function () { placeFly(ev); }; }
+  f.style.display = "block";
+  placeFly(ev);
+});
+document.addEventListener("mousemove", function (ev) { if (el("fly").style.display === "block") placeFly(ev); });
+
+function drawSide(list) {
+  var d = st.data, sel = st.sel;
+  var day = onDay(list, sel);
+  var soon = list.filter(function (e) { return (e.end || e.date) >= d.today && e.date <= shift(d.today, 14); })
+    .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.time || "99") < (b.time || "99") ? -1 : 1; });
+  el("side").innerHTML = "<h2>" + md(sel) + " のイベント（" + day.length + "）" +
+    (day.length ? '<button class="flybtn" data-open="' + sel + '">フライヤー一覧</button>' : "") + "</h2>" + (day.length ? day.map(item).join("") : '<div class="empty">この日のイベントはありません。</div>') +
+    '<h2 style="margin-top:18px">これから2週間（' + soon.length + "）</h2>" + (soon.length ? soon.slice(0, 60).map(item).join("") : '<div class="empty">ありません。</div>');
+}
+
+el("areas").onclick = function (e) {
+  var c = e.target.closest("[data-a]");
+  if (!c) return;
+  st.area = c.getAttribute("data-a");
+  try { localStorage.setItem("ac:area", st.area); } catch (x) {}
+  fillPrefs();
+  draw();
+};
+el("genres").onclick = function (e) {
+  var c = e.target.closest("[data-g]");
+  if (!c) return;
+  var g = c.getAttribute("data-g");
+  st.off[g] = !st.off[g];
+  draw();
+};
+el("grid").onclick = function (e) {
+  var c = e.target.closest("[data-d]");
+  if (!c) return;
+  st.sel = c.getAttribute("data-d");
+  if (st.sel.slice(0, 7) !== st.ym) st.ym = st.sel.slice(0, 7);
+  draw();
+  if (TOUCH && onDay(shown(), st.sel).length) openSheet(st.sel);
+  else if (window.innerWidth <= 860) el("side").scrollIntoView({ behavior: "smooth" });
+};
+el("side").onclick = function (e) {
+  var c = e.target.closest("[data-open]");
+  if (c) openSheet(c.getAttribute("data-open"));
+};
+function moveMonth(n) {
+  var y = Number(st.ym.slice(0, 4)), m = Number(st.ym.slice(5, 7)) - 1 + n;
+  var d = new Date(Date.UTC(y, m, 1));
+  st.ym = d.toISOString().slice(0, 7);
+  draw();
+}
+el("prev").onclick = function () { moveMonth(-1); };
+el("next").onclick = function () { moveMonth(1); };
+el("thisMonth").onclick = function () { st.ym = st.data.today.slice(0, 7); st.sel = st.data.today; draw(); };
+el("pref").onchange = function () { st.pref = this.value; draw(); };
+el("kind").onchange = function () { st.kind = this.value; draw(); };
+el("q").oninput = function () { st.q = this.value.trim(); draw(); };
+load();
+setInterval(function () { load(true); }, 30 * 60000);
+</script>
+</body>
+</html>
