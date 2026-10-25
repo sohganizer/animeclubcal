@@ -61,6 +61,19 @@
   #sheet .card .t { font-weight:600; font-size:14px; line-height:1.4; }
   #sheet .card .m { font-size:12px; color:var(--sub); margin-top:3px; line-height:1.5; }
   footer { max-width:1180px; margin:0 auto; padding:0 20px 30px; color:var(--sub); font-size:12px; line-height:1.6; }
+  .week { margin:12px 0 4px; }
+  .week h2 { font-size:15px; margin:0 0 8px; }
+  .week h2 small { font-weight:400; color:var(--sub); font-size:12px; margin-left:6px; }
+  .wtrack { display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; padding:2px 0 6px; -webkit-overflow-scrolling:touch; }
+  .wtrack::-webkit-scrollbar { display:none; }
+  .wcard { position:relative; flex:none; width:150px; border-radius:10px; overflow:hidden; background:#fff; border:1px solid var(--line); color:inherit; text-decoration:none; }
+  .wcard:hover { text-decoration:none; border-color:var(--sub); }
+  .wcard img { display:block; width:100%; height:200px; object-fit:cover; background:#eee; }
+  .wcard .c { padding:6px 8px 7px; }
+  .wcard .d { font-size:11px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wcard > b { position:absolute; top:6px; left:6px; color:#fff; font-weight:600; border-radius:4px; padding:1px 6px; font-size:10px; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .wcard > b.anison { background:var(--anison); } .wcard > b.vocaloid { background:var(--vocaloid); } .wcard > b.vtuber { background:var(--vtuber); }
+  .wcard .t { font-size:12px; font-weight:600; line-height:1.35; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .filters { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
   .navbtn .s, .more .s, .filtbtn { display:none; }
   @media (max-width: 860px) {
@@ -102,6 +115,11 @@
     .item .thumb { width:64px; height:64px; }
     .item .t { font-size:14px; }
     footer { padding:0 12px 24px; font-size:11px; }
+    .week { margin:8px 0 2px; }
+    .week h2 { font-size:14px; margin-bottom:6px; }
+    .wtrack { margin:0 -10px; padding:2px 10px 6px; gap:8px; }
+    .wcard { width:118px; }
+    .wcard img { height:158px; }
     #sheet .top { padding:10px 12px; font-size:15px; }
     #sheet .cards { grid-template-columns:1fr; gap:12px; padding:4px 10px 24px; }
   }
@@ -121,6 +139,7 @@
     <select id="kind"><option value="">種類: すべて</option></select>
     <input type="search" id="q" placeholder="イベント名・会場・DJ で探す">
   </div>
+  <section class="week" id="week"></section>
   <div class="nav"><button id="prev" class="navbtn"><span class="l">‹ 前の月</span><span class="s">‹</span></button><b id="month"></b><button id="next" class="navbtn"><span class="l">次の月 ›</span><span class="s">›</span></button><button id="thisMonth">今月</button></div>
   <div class="cols">
     <div class="grid" id="grid"><div class="empty" style="grid-column:1/-1;background:#fff;padding:20px">読み込み中…</div></div>
@@ -231,6 +250,7 @@ function draw() {
       (evs.length > 4 ? '<div class="more"><span class="l">ほか ' + (evs.length - 4) + ' 件</span><span class="s">+' + (evs.length - 4) + "</span></div>" : "") + "</div>";
   }
   el("grid").innerHTML = html;
+  drawWeek(list);
   drawSide(list);
   el("foot").innerHTML = runNote(d) + "最終更新: " + esc(d.last || "まだ1回も更新していません") +
     "・毎日早朝に更新・情報は X の公開ポストと公開ウェブページから自動で集めたもので、まちがいや中止・変更が含まれることがあります。<br>版 " + esc(d.v);
@@ -308,6 +328,48 @@ document.addEventListener("mouseover", function (ev) {
   placeFly(ev);
 });
 document.addEventListener("mousemove", function (ev) { if (el("fly").style.display === "block") placeFly(ev); });
+
+ 
+var WEEK = { x: 0, last: 0, pause: false, timer: 0, raf: 0, speed: 28 };
+function drawWeek(list) {
+  var d = st.data, to = shift(d.today, 6);
+  var evs = list.filter(function (e) { return e.flyer && (e.end || e.date) >= d.today && e.date <= to; })
+    .sort(function (a, b) { var x = a.date < d.today ? d.today : a.date, y = b.date < d.today ? d.today : b.date; return x < y ? -1 : x > y ? 1 : (a.time || "99") < (b.time || "99") ? -1 : 1; });
+  if (!evs.length) { el("week").innerHTML = ""; return; }
+  var card = function (e, clone) {
+    var day = e.date < d.today ? d.today : e.date;
+    var inner = '<img loading="lazy" alt="" src="' + esc(small(e.flyer)) + '"><b class="' + e.genre + '">' + esc(d.genres[e.genre]) + "</b>" +
+      '<div class="c"><div class="d">' + esc(md(day) + (e.time ? " " + e.time : "")) + '</div><div class="t">' + esc(e.title) + "</div></div>";
+    return e.url ? '<a class="wcard" href="' + esc(e.url) + '" target="_blank" rel="noopener"' + (clone ? ' aria-hidden="true" tabindex="-1"' : "") + ">" + inner + "</a>"
+      : '<div class="wcard"' + (clone ? ' aria-hidden="true"' : "") + ">" + inner + "</div>";
+  };
+  var cards = evs.map(function (e) { return card(e, false); }).join("");
+  el("week").innerHTML = "<h2>今週のイベント<small>" + md(d.today) + "〜" + md(to) + "・" + evs.length + " 件</small></h2>" +
+    '<div class="wtrack" id="wtrack">' + cards + "</div>";
+  var tr = el("wtrack");
+  if (tr.scrollWidth > tr.clientWidth + 8) {
+    tr.innerHTML = cards + evs.map(function (e) { return card(e, true); }).join("");
+    tr.setAttribute("data-loop", "1");
+  }
+  WEEK.x = 0;
+  tr.onmouseenter = function () { WEEK.pause = true; };
+  tr.onmouseleave = function () { WEEK.x = tr.scrollLeft; WEEK.pause = false; };
+  tr.addEventListener("touchstart", function () { WEEK.pause = true; clearTimeout(WEEK.timer); }, { passive: true });
+  tr.addEventListener("touchend", function () { clearTimeout(WEEK.timer); WEEK.timer = setTimeout(function () { WEEK.x = tr.scrollLeft; WEEK.pause = false; }, 2500); }, { passive: true });
+  if (!WEEK.raf && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) && window.requestAnimationFrame) WEEK.raf = requestAnimationFrame(weekStep);
+}
+function weekStep(t) {
+  var tr = el("wtrack");
+  var dt = WEEK.last ? Math.min(t - WEEK.last, 100) : 0;
+  WEEK.last = t;
+  if (tr && tr.getAttribute("data-loop") && !WEEK.pause && !document.hidden) {
+    WEEK.x += WEEK.speed * dt / 1000;
+    var half = tr.scrollWidth / 2;
+    if (WEEK.x >= half) WEEK.x -= half;
+    tr.scrollLeft = WEEK.x;
+  }
+  WEEK.raf = requestAnimationFrame(weekStep);
+}
 
 function drawSide(list) {
   var d = st.data, sel = st.sel;
