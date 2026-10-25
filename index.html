@@ -3,6 +3,8 @@
 <head>
 <base target="_top">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アニクラ・ボカクラ・VTuber クラブイベントカレンダー</title>
 <style>
   :root { --anison:#f91880; --vocaloid:#00a8a8; --vtuber:#7856ff; --ink:#0f1419; --sub:#536471; --line:#e6e9ec; }
   * { box-sizing:border-box; }
@@ -21,10 +23,10 @@
   .nav { display:flex; align-items:center; gap:10px; margin:8px 0; }
   .nav b { font-size:18px; min-width:120px; text-align:center; }
   .nav button { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:14px; }
-  .grid { display:grid; grid-template-columns:repeat(7, 1fr); background:var(--line); gap:1px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .grid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); background:var(--line); gap:1px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
   .dow { background:#fff; text-align:center; font-size:12px; color:var(--sub); padding:6px 0; }
   .dow.sun, .day.sun .dn { color:#e0245e; } .dow.sat, .day.sat .dn { color:#1d9bf0; }
-  .day { background:#fff; min-height:112px; padding:4px 5px 6px; cursor:pointer; overflow:hidden; }
+  .day { min-width:0; background:#fff; min-height:112px; padding:4px 5px 6px; cursor:pointer; overflow:hidden; }
   .day.out { background:#fafbfb; } .day.out .dn { opacity:.4; }
   .day.today { box-shadow:inset 0 0 0 2px var(--ink); }
   .day.sel { background:#fffbe6; }
@@ -59,11 +61,49 @@
   #sheet .card .t { font-weight:600; font-size:14px; line-height:1.4; }
   #sheet .card .m { font-size:12px; color:var(--sub); margin-top:3px; line-height:1.5; }
   footer { max-width:1180px; margin:0 auto; padding:0 20px 30px; color:var(--sub); font-size:12px; line-height:1.6; }
+  .filters { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+  .navbtn .s, .more .s, .filtbtn { display:none; }
   @media (max-width: 860px) {
-    .cols { grid-template-columns:1fr; }
-    .day { min-height:64px; padding:3px; }
-    .ev { font-size:0; height:6px; padding:0; margin-top:2px; }
+    .cols { grid-template-columns:minmax(0, 1fr); }
     input[type=search] { min-width:0; flex:1; }
+  }
+  @media (max-width: 640px) {
+    header { padding:10px 12px 0; }
+    h1 { font-size:15px; line-height:1.35; }
+    .lead { display:none; }
+    .filtbtn { display:block; width:100%; margin:4px 0 2px; border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px 12px; font-size:14px; color:var(--ink); }
+    .filtbtn.act { border-color:var(--ink); font-weight:600; }
+    .filters { display:none !important; }
+    .filters.show { display:grid !important; }
+    main { padding:0 10px 24px; }
+    .bar.scroll { flex-wrap:nowrap; overflow-x:auto; margin:6px -10px; padding:2px 10px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+    .bar.scroll::-webkit-scrollbar { display:none; }
+    .chip { flex:none; padding:6px 11px; font-size:13px; }
+    .filters { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:6px 0 8px; }
+    .filters input[type=search] { grid-column:1 / -1; }
+    select, input[type=search] { width:100%; font-size:16px; padding:8px 12px; }
+    .nav { gap:6px; margin:6px 0; }
+    .nav b { flex:1; font-size:17px; min-width:0; }
+    .nav button { padding:8px 12px; }
+    .navbtn .l { display:none; } .navbtn .s { display:inline; }
+    .grid { border-radius:10px; }
+    .dow { font-size:11px; padding:4px 0; }
+    .day { min-height:54px; padding:3px 2px 4px; text-align:center; }
+    .dn { font-size:12px; }
+    .ev { display:inline-block; width:7px; height:7px; padding:0; margin:3px 1px 0; border-radius:50%; font-size:0; vertical-align:top; }
+    .more { font-size:10px; margin-top:1px; }
+    .more .l { display:none; } .more .s { display:inline; }
+    .day.today { box-shadow:inset 0 0 0 2px var(--ink); border-radius:0; }
+    .cols { gap:10px; margin-top:10px; }
+    .panel { padding:12px; border-radius:10px; }
+    .panel h2 { font-size:15px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .flybtn { float:none; flex:none; padding:6px 12px; font-size:13px; }
+    .item { gap:10px; }
+    .item .thumb { width:64px; height:64px; }
+    .item .t { font-size:14px; }
+    footer { padding:0 12px 24px; font-size:11px; }
+    #sheet .top { padding:10px 12px; font-size:15px; }
+    #sheet .cards { grid-template-columns:1fr; gap:12px; padding:4px 10px 24px; }
   }
 </style>
 </head>
@@ -73,14 +113,15 @@
   <p class="lead">日本国内のアニソン（アニクラ）・ボカロ（ボカクラ）・VTuber 楽曲のクラブ・DJ イベントを、X の告知とウェブから毎日自動で集めています。日付・時間・会場は必ず出典で確かめてください。</p>
 </header>
 <main>
-  <div class="bar" id="areas"></div>
-  <div class="bar" id="genres"></div>
-  <div class="bar">
-    <select id="pref"><option value="">すべての都道府県</option></select>
-    <select id="kind"><option value="">すべての種類</option></select>
+  <div class="bar scroll" id="areas"></div>
+  <div class="bar scroll" id="genres"></div>
+  <button id="filtBtn" class="filtbtn">絞り込み・検索</button>
+  <div class="filters" id="filters">
+    <select id="pref"><option value="">都道府県: すべて</option></select>
+    <select id="kind"><option value="">種類: すべて</option></select>
     <input type="search" id="q" placeholder="イベント名・会場・DJ で探す">
   </div>
-  <div class="nav"><button id="prev">‹ 前の月</button><b id="month"></b><button id="next">次の月 ›</button><button id="thisMonth">今月</button></div>
+  <div class="nav"><button id="prev" class="navbtn"><span class="l">‹ 前の月</span><span class="s">‹</span></button><b id="month"></b><button id="next" class="navbtn"><span class="l">次の月 ›</span><span class="s">›</span></button><button id="thisMonth">今月</button></div>
   <div class="cols">
     <div class="grid" id="grid"><div class="empty" style="grid-column:1/-1;background:#fff;padding:20px">読み込み中…</div></div>
     <div class="panel" id="side"></div>
@@ -144,7 +185,7 @@ function fillPrefs() {
   var prefs = {};
   st.data.events.forEach(function (e) { if (e.pref && inArea(e, st.area)) prefs[e.pref] = 1; });
   if (st.pref && !prefs[st.pref]) st.pref = "";
-  el("pref").innerHTML = '<option value="">' + (st.area === "all" ? "すべての都道府県" : "エリア内のすべての都道府県") + "</option>" +
+  el("pref").innerHTML = '<option value="">都道府県: すべて</option>' +
     Object.keys(prefs).sort(prefOrder).map(function (p) { return "<option" + (p === st.pref ? " selected" : "") + ">" + esc(p) + "</option>"; }).join("");
 }
 
@@ -163,6 +204,9 @@ function onDay(list, d) { return list.filter(function (e) { return e.date <= d &
 
 function draw() {
   var d = st.data, list = shown();
+  var nf = (st.pref ? 1 : 0) + (st.kind ? 1 : 0) + (st.q ? 1 : 0);
+  el("filtBtn").textContent = "絞り込み・検索" + (nf ? "（" + nf + "）" : "");
+  el("filtBtn").classList.toggle("act", !!nf);
   var upcoming = d.events.filter(function (e) { return (e.end || e.date) >= d.today; });
   el("areas").innerHTML = AREAS.map(function (a) {
     var n = upcoming.filter(function (e) { return inArea(e, a.id); }).length;
@@ -184,7 +228,7 @@ function draw() {
     html += '<div class="day' + (day.slice(0, 7) !== st.ym ? " out" : "") + (day === d.today ? " today" : "") + (day === st.sel ? " sel" : "") +
       (w === 0 ? " sun" : w === 6 ? " sat" : "") + '" data-d="' + day + '"><div class="dn">' + Number(day.slice(8)) + "</div>" +
       evs.slice(0, 4).map(function (e) { return '<span class="ev ' + e.genre + '" data-f="' + esc(e.flyer) + '">' + esc((e.time ? e.time + " " : "") + e.title) + "</span>"; }).join("") +
-      (evs.length > 4 ? '<div class="more">ほか ' + (evs.length - 4) + " 件</div>" : "") + "</div>";
+      (evs.length > 4 ? '<div class="more"><span class="l">ほか ' + (evs.length - 4) + ' 件</span><span class="s">+' + (evs.length - 4) + "</span></div>" : "") + "</div>";
   }
   el("grid").innerHTML = html;
   drawSide(list);
@@ -296,8 +340,6 @@ el("grid").onclick = function (e) {
   st.sel = c.getAttribute("data-d");
   if (st.sel.slice(0, 7) !== st.ym) st.ym = st.sel.slice(0, 7);
   draw();
-  if (TOUCH && onDay(shown(), st.sel).length) openSheet(st.sel);
-  else if (window.innerWidth <= 860) el("side").scrollIntoView({ behavior: "smooth" });
 };
 el("side").onclick = function (e) {
   var c = e.target.closest("[data-open]");
@@ -312,6 +354,7 @@ function moveMonth(n) {
 el("prev").onclick = function () { moveMonth(-1); };
 el("next").onclick = function () { moveMonth(1); };
 el("thisMonth").onclick = function () { st.ym = st.data.today.slice(0, 7); st.sel = st.data.today; draw(); };
+el("filtBtn").onclick = function () { el("filters").classList.toggle("show"); };
 el("pref").onchange = function () { st.pref = this.value; draw(); };
 el("kind").onchange = function () { st.kind = this.value; draw(); };
 el("q").oninput = function () { st.q = this.value.trim(); draw(); };
